@@ -4,7 +4,7 @@
  *       Filename:  log.c
  *
  *    Description:  log System 
- *    日志轮转，按级别统计日志，线程安全
+ *    日志轮转，按级别统计日志，支持线程安全
  *
  *	  日志文件命名  X_LV_YYYYMMDD_XXXXXX(1_debug_20150110_00001)
  *        Version:  1.0
@@ -32,26 +32,6 @@
 
 extern char log_file[64];
 
-/* @brief 日志配置定义
- */
-struct struct log_conf {
-	uint32_t max_files;		//最大文件个数
-	uint32_t per_logsize;	//每个文件大小
-	char dirname[128];		//目录名字
-	char log_prename[16];	//日志前缀
-	LOG_LV log_lv;		//日志级别
-	LOG_DEST log_dest;		//日志输出
-} __attribute__((packed)) log_conf_t;
-
-
-/* @brief 不同级别的日志fd定义
- */
-typedef struct log_fd {
-	int fd;
-	int day;
-	int seq;
-	int basename[64];
-} __attribute__((packed)) log_fd_t;
 
 
 static log_fd_t logfds[LOG_LV_MAX];
