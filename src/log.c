@@ -4,6 +4,7 @@
  *       Filename:  log.c
  *
  *    Description:  log System 
+ *    日志轮转，按级别统计日志，线程安全
  *
  *        Version:  1.0
  *        Created:  2014年11月24日 21时43分55秒
@@ -22,8 +23,11 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
 
 #include "log.h"
+
+#define FILENAM_LEN 128
 
 extern char log_file[64];
 
@@ -62,7 +66,19 @@ static const char *LOG_LV_NAME[LOG_LV_MAX] = {
 
 static int gen_log_seq(int lv) 
 {
+	char filename[FILENAME_LEN] = {0};
+	DIR *dir = opendir(logconf.dirname);
+	if (!dir) {
+		fprintf(stderr, "open dir %s failed", logconf.dirname);
+		return -1;
+	}
 
+	struct dirent *file;
+	while ((file = readdir(dir))) {
+		
+	}
+
+	closedir(dir);
 }
 
 int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfiles, const char* prename)
