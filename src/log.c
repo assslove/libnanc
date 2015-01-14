@@ -6,6 +6,7 @@
  *    Description:  log System 
  *    日志轮转，按级别统计日志，线程安全
  *
+ *	  日志文件命名  X_LV_YYYYMMDD_XXXXXX(1_debug_20150110_00001)
  *        Version:  1.0
  *        Created:  2014年11月24日 21时43分55秒
  *       Revision:  none
@@ -49,7 +50,7 @@ typedef struct log_fd {
 	int fd;
 	int day;
 	int seq;
-	int filename[64];
+	int basename[64];
 } __attribute__((packed)) log_fd_t;
 
 
@@ -74,8 +75,8 @@ static int gen_log_seq(int lv)
 	}
 
 	struct dirent *file;
-	while ((file = readdir(dir))) {
-		
+	while ((file = readdir(dir))) { //找出文件相等比较大的序号
+		if (strncmp(dir->d_name, log_fds[lv].
 	}
 
 	closedir(dir);
@@ -113,7 +114,7 @@ int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfile
 
 	int i;
 	for (i = LOG_LV_BOOT; i < LOG_LV_MAX; ++i) {
-		sprintf(log_fds[i].filename, "%s%s", logconf.log_prename, LOG_LV_NAME[i]);
+		sprintf(log_fds[i].filename, "%s_%s_", logconf.log_prename, LOG_LV_NAME[i]);
 		log_fds[i].fd = -1;
 		log_fds[i].seq = gen_log_seq(i);
 	}
