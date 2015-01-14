@@ -17,9 +17,11 @@
  */
 
 #include <stdio.h>
+#include "src/log.h"
 
 int main(int argc, char* argv[])
 {
-	printf("hello, world");
+	DEBUG(0, "hello, world");
+	DEBUG(1, "hello, world");
 	return 0;
 }
