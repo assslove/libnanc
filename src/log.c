@@ -32,27 +32,6 @@
 
 extern char log_file[64];
 
-/* @brief 日志配置定义
- */
-struct struct log_conf {
-	uint32_t max_files;		//最大文件个数
-	uint32_t per_logsize;	//每个文件大小
-	char dirname[128];		//目录名字
-	char log_prename[16];	//日志前缀
-	LOG_LV log_lv;		//日志级别
-	LOG_DEST log_dest;		//日志输出
-} __attribute__((packed)) log_conf_t;
-
-
-/* @brief 不同级别的日志fd定义
- */
-typedef struct log_fd {
-	int fd;
-	int day;
-	int seq;
-	int basename[64];
-} __attribute__((packed)) log_fd_t;
-
 
 static log_fd_t logfds[LOG_LV_MAX];
 static log_conf_t logconf;
@@ -65,7 +44,7 @@ static const char *LOG_LV_NAME[LOG_LV_MAX] = {
 	"boot"
 };
 
-static int gen_log_seq(int lv) 
+static int gen_log_seq(int llv, struct tm *tm) 
 {
 	char filename[FILENAME_LEN] = {0};
 	DIR *dir = opendir(logconf.dirname);
@@ -75,8 +54,21 @@ static int gen_log_seq(int lv)
 	}
 
 	struct dirent *file;
+	int init_seq = logfds[llv].seq;
+	int tmp_seq = 0;
+	char seq_str[10] = {'\0'};
 	while ((file = readdir(dir))) { //找出文件相等比较大的序号
-		if (strncmp(dir->d_name, log_fds[lv].
+		if (strcmp(dir->d_name, log_fds[llv].basename, logfds[llv].baselen) == 0) {
+			sprintf(seq_str, "%s", dir->d_name + logfds[llv].baselen);
+			tmp_seq = atoi(seq_str);
+			if (init_seq < tmp_seq) {
+				init_seq = tmp_seq;
+			}
+		}
+	}
+
+	if (init_seq >= logconf.maxfiles) { //大于最大文件 不写了
+		logfds[llv].seq = -1;
 	}
 
 	closedir(dir);
@@ -112,11 +104,18 @@ int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfile
 		strcpy(logconf.log_prename, log_pre);
 	}
 
+	time_t cur = time(0);
+	struct tm tm;
+	localtime_r(&cur, &tm);
 	int i;
+	char day_str[16] = {'\0'};
+	sprintf(day_str, "%04d%02d%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
 	for (i = LOG_LV_BOOT; i < LOG_LV_MAX; ++i) {
-		sprintf(log_fds[i].filename, "%s_%s_", logconf.log_prename, LOG_LV_NAME[i]);
+		log_fds[i].baselen = snprintf(log_fds[i].basename, 64, "%s_%s_%s", logconf.log_prename, LOG_LV_NAME[i], day_str);
 		log_fds[i].fd = -1;
-		log_fds[i].seq = gen_log_seq(i);
+		log_fds[i].seq = 1;
+		log_fds[i].seq = gen_log_seq(i, &tm);
+		log_fds[i].day = atoi(day_str);
 	}
 
 	ret = 0;
@@ -124,12 +123,57 @@ int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfile
 	return ret;
 }
 
+
+void log_fini()
+{
+
+}
+
+/* @brief 打开当前级别的日志文件
+ */
+static open_file(int llv, struct tm *tm) 
+{
+	static char filename[256] = {'\0'};
+	if (unlikely(logfds[llv].fd == -1)) { //打开文件
+		if (gen_log_seq(llv, tm) == -1) {
+			return -1;
+		}
+		sprintf(filename, "%s/%s%06d", logconf.prename, logfds[llv].basename, logfds[llv].seq);
+	} else { //判断当前文件是否合法
+
+	}
+
+	logfds[llv].fd = open(filename, O_APPEND | O_CREAT | O_CLOEXEC);
+	if (logfds[llv].fd == -1) {
+		fprintf(stderr, "open %s failed [%s]", filename, strerror(errno));
+		return -1;
+	}
+}
+
+void do_log(int llv, uint32_t key, const char* fmt, ...)
+{
+	time_t now = time(NULL);	
+	struct tm tm;
+	localtime_r(&now, &tm);
+
+	if (open_file(llv, tm) == -1) {
+		return ;
+	}
+	
+	va_list ap;
+	va_start(ap, fmt);
+	fprintf(logfds[llv].fd, "%02u:%02u%02u %u ", tm->tm_hour, tm->tm_min, tm->tm_sec, key);
+	vfprintf(logfds[llv].fd, fmt, ap);
+	fprintf(logfds[llv].fd, "\n");
+	fflush(logfds[llv].fd);
+	va_end(ap);
+}
+
 void slog(int llv, uint32_t key, const char* fmt, ...)
 {
 	time_t now = time(NULL);
 	struct tm tm;
 	localtime_r(&now, &tm);
-	
 	
 	va_list ap;
 //	strcat(logfile, LOG_LV_NAME[llv]);
