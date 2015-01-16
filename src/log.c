@@ -42,7 +42,6 @@ static const char *LOG_LV_NAME[LOG_LV_MAX] = {
 
 static int gen_log_seq(int llv, struct tm *tm) 
 {
-	char filename[FILENAME_LEN] = {0};
 	DIR *dir = opendir(logconf.dirname);
 	if (!dir) {
 		fprintf(stderr, "open dir %s failed", logconf.dirname);
@@ -77,10 +76,10 @@ int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfile
 {
 	int ret = -1;
 	assert(lv >= LOG_LV_BOOT && lv < LOG_LV_MAX);
-	assert(max_files >= 100 maxfiles <= 1000000);
+	assert(maxfiles >= 100 maxfiles <= 100000);
 	assert(filesize >= 10 * 1024 * 1024 && filesize <= 100 * 1024 * 1024); //10M - 100M
 
-	logconf.max_files = maxfiles;
+	logconf.maxfiles = maxfiles;
 	logconf.pre_logsize = filesize;
 	logconf.log_lv = lv;
 	logconf.log_dest = LOG_DEST_FILE;
@@ -98,9 +97,9 @@ int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfile
 	memset(logconf.dirname, 0, sizeof(logconf.dirname));
 	strcpy(logconf.dirname, dirname);
 
-	if (!log_pre) {
+	if (!prename) {
 		memset(logconf.log_prename, 0, sizeof(logconf.log_prename));
-		strcpy(logconf.log_prename, log_pre);
+		strcpy(logconf.log_prename, prename);
 	}
 
 	time_t cur = time(0);
@@ -110,11 +109,11 @@ int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfile
 	char day_str[16] = {'\0'};
 	sprintf(day_str, "%04d%02d%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
 	for (i = LOG_LV_BOOT; i < LOG_LV_MAX; ++i) {
-		log_fds[i].baselen = snprintf(log_fds[i].basename, 64, "%s_%s_%s", logconf.log_prename, LOG_LV_NAME[i], day_str);
+		log_fds[i].baselen = snprintf(log_fds[i].basename, 64, "%s_%s_%s_", logconf.log_prename, LOG_LV_NAME[i], day_str);
 		log_fds[i].fd = -1;
 		log_fds[i].seq = 1;
 		log_fds[i].seq = gen_log_seq(i, &tm);
-		log_fds[i].day = atoi(day_str);
+		log_fds[i].day = tm->tm_mday;
 	}
 
 	ret = 0;
@@ -125,7 +124,12 @@ int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfile
 
 void log_fini()
 {
-
+	int i = 0;
+	for (i = LOG_LV_BOOT; i < LOG_LV_MAX; ++i) {
+		if (log_fds[i].fd != -1) {
+			close(log_fds[i].fd);
+		}
+	}
 }
 
 /* @brief 打开当前级别的日志文件
@@ -146,13 +150,13 @@ static open_file(int llv, struct tm *tm)
 			char day_str[16] = {'\0'};
 			sprintf(day_str, "%04d%02d%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
 			snprintf(log_fds[i].basename, 64, "%s_%s_%s", logconf.prename, LOG_LV_NAME[i], day_str);
-			sprintf(filename, "%s/%s%06d", logconf.prename, logfds[llv].basename, logfds[llv].seq);
+			sprintf(filename, "%s/%s%06d", logconf.dirname, logfds[llv].basename, logfds[llv].seq);
 			need_open = 1;
 		} else if (lseek(fd, 0, SEEK_END) >= logconf.per_logsize) {
 			if (gen_log_seq(llv, tm) == -1) {
 				return -1;
 			}
-			sprintf(filename, "%s/%s%06d", logconf.prename, logfds[llv].basename, logfds[llv].seq);
+			sprintf(filename, "%s/%s%06d", logconf.dirname, logfds[llv].basename, logfds[llv].seq);
 			need_open = 1;
 		} 
 	}
@@ -180,9 +184,9 @@ void do_log(int llv, uint32_t key, const char* fmt, ...)
 
 	va_list ap;
 	va_start(ap, fmt);
-#define LOGBUF_LEN
+#define LOGBUF_LEN 2048
 	static char logbuf[LOGBUF_LEN] = {'\0'};
-	static int start = sprintf(logbuf, LOGBUF_LEN, "%02u:%02u%02u %u ", tm->tm_hour, tm->tm_min, tm->tm_sec, key);
+	static int start = snprintf(logbuf, LOGBUF_LEN, "%02u:%02u%02u %u ", tm->tm_hour, tm->tm_min, tm->tm_sec, key);
 	static int end = vnsprintf(logbuf + start, LOGBUF_LEN - start, fmt, ap);
 	va_end(ap);
 
