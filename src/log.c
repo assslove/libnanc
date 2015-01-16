@@ -17,18 +17,23 @@
  * =====================================================================================
  */
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
+#include <assert.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <time.h>
+#include <errno.h>
 
 #include "log.h"
 
 #define FILENAM_LEN 128
-extern char log_file[64];
 static log_fd_t logfds[LOG_LV_MAX];
 static log_conf_t logconf;
 static const char *LOG_LV_NAME[LOG_LV_MAX] = {
@@ -53,8 +58,8 @@ static int gen_log_seq(int llv, struct tm *tm)
 	int tmp_seq = 0;
 	char seq_str[10] = {'\0'};
 	while ((file = readdir(dir))) { //找出文件相等比较大的序号
-		if (strcmp(dir->d_name, log_fds[llv].basename, logfds[llv].baselen) == 0) {
-			sprintf(seq_str, "%s", dir->d_name + logfds[llv].baselen);
+		if (strncmp(file->d_name, logfds[llv].basename, logfds[llv].baselen) == 0) {
+			sprintf(seq_str, "%s", file->d_name + logfds[llv].baselen);
 			tmp_seq = atoi(seq_str);
 			if (init_seq < tmp_seq) {
 				init_seq = tmp_seq;
@@ -62,25 +67,27 @@ static int gen_log_seq(int llv, struct tm *tm)
 		}
 	}
 
+	int ret = -1;
 	if (unlikely(init_seq >= logconf.maxfiles)) { //大于最大文件 不写了
 		logfds[llv].seq = -1;
-		return -1;
 	} else {
-		logfds[llv].seq = (logfds[lls].seq + 1) % logconf.maxfiles + 1;
+		logfds[llv].seq = (logfds[llv].seq + 1) % logconf.maxfiles + 1;
+		ret = 0;
 	}
 
 	closedir(dir);
+	return ret;
 }
 
-int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfiles, const char* prename)
+int log_init(const char *dirname, int lv, uint32_t filesize, uint32_t maxfiles, const char* prename)
 {
 	int ret = -1;
 	assert(lv >= LOG_LV_BOOT && lv < LOG_LV_MAX);
-	assert(maxfiles >= 100 maxfiles <= 100000);
-	assert(filesize >= 10 * 1024 * 1024 && filesize <= 100 * 1024 * 1024); //10M - 100M
+	assert(maxfiles >= 1 && maxfiles <= 100000);
+	assert(filesize >= 10 && filesize <= 100 * 1024 * 1024); //10 - 100M
 
 	logconf.maxfiles = maxfiles;
-	logconf.pre_logsize = filesize;
+	logconf.per_logsize = filesize;
 	logconf.log_lv = lv;
 	logconf.log_dest = LOG_DEST_FILE;
 
@@ -98,8 +105,8 @@ int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfile
 	strcpy(logconf.dirname, dirname);
 
 	if (!prename) {
-		memset(logconf.log_prename, 0, sizeof(logconf.log_prename));
-		strcpy(logconf.log_prename, prename);
+		memset(logconf.prename, 0, sizeof(logconf.prename));
+		strcpy(logconf.prename, prename);
 	}
 
 	time_t cur = time(0);
@@ -108,12 +115,12 @@ int log_init(const char *dirname, LOG_LV lv, uint32_t filesize, uint32_t maxfile
 	int i;
 	char day_str[16] = {'\0'};
 	sprintf(day_str, "%04d%02d%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
-	for (i = LOG_LV_BOOT; i < LOG_LV_MAX; ++i) {
-		log_fds[i].baselen = snprintf(log_fds[i].basename, 64, "%s_%s_%s_", logconf.log_prename, LOG_LV_NAME[i], day_str);
-		log_fds[i].fd = -1;
-		log_fds[i].seq = 1;
-		log_fds[i].seq = gen_log_seq(i, &tm);
-		log_fds[i].day = tm->tm_mday;
+	for (i = LOG_LV_CRIT; i < LOG_LV_MAX; ++i) {
+		logfds[i].baselen = snprintf(logfds[i].basename, 64, "%s_%s_%s_", logconf.prename, LOG_LV_NAME[i], day_str);
+		logfds[i].fd = -1;
+		logfds[i].seq = 1;
+		logfds[i].seq = gen_log_seq(i, &tm);
+		logfds[i].day = tm.tm_mday;
 	}
 
 	ret = 0;
@@ -126,15 +133,15 @@ void log_fini()
 {
 	int i = 0;
 	for (i = LOG_LV_BOOT; i < LOG_LV_MAX; ++i) {
-		if (log_fds[i].fd != -1) {
-			close(log_fds[i].fd);
+		if (logfds[i].fd != -1) {
+			close(logfds[i].fd);
 		}
 	}
 }
 
 /* @brief 打开当前级别的日志文件
 */
-static open_file(int llv, struct tm *tm) 
+static int open_file(int llv, struct tm *tm) 
 {
 	static char filename[256] = {'\0'};
 	int need_open = 0;
@@ -145,14 +152,14 @@ static open_file(int llv, struct tm *tm)
 		need_open = 1;
 		sprintf(filename, "%s/%s%06d", logconf.prename, logfds[llv].basename, logfds[llv].seq);
 	} else { //有文件 判断是不是同一天 需要更换文件
-		if (tm->mday != logfds[llv].day) { //记录
-			logfds[lv].day = tm->mday;	
+		if (tm->tm_mday != logfds[llv].day) { //记录
+			logfds[llv].day = tm->tm_mday;	
 			char day_str[16] = {'\0'};
-			sprintf(day_str, "%04d%02d%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
-			snprintf(log_fds[i].basename, 64, "%s_%s_%s", logconf.prename, LOG_LV_NAME[i], day_str);
+			sprintf(day_str, "%04d%02d%02d", tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday);
+			snprintf(logfds[llv].basename, 64, "%s_%s_%s", logconf.prename, LOG_LV_NAME[llv], day_str);
 			sprintf(filename, "%s/%s%06d", logconf.dirname, logfds[llv].basename, logfds[llv].seq);
 			need_open = 1;
-		} else if (lseek(fd, 0, SEEK_END) >= logconf.per_logsize) {
+		} else if (lseek(logfds[llv].fd, 0, SEEK_END) >= logconf.per_logsize) {
 			if (gen_log_seq(llv, tm) == -1) {
 				return -1;
 			}
@@ -162,7 +169,7 @@ static open_file(int llv, struct tm *tm)
 	}
 
 	if (need_open) {
-		logfds[llv].fd = open(filename, O_APPEND | O_CREAT | O_CLOEXEC);
+		logfds[llv].fd = open(filename, O_APPEND | O_CREAT | O_CLOEXEC, O_RDWR);
 		if (logfds[llv].fd == -1) {
 			fprintf(stderr, "open %s failed [%s]", filename, strerror(errno));
 			return -1;
@@ -174,11 +181,15 @@ static open_file(int llv, struct tm *tm)
 
 void do_log(int llv, uint32_t key, const char* fmt, ...)
 {
+	if (llv >= logconf.log_lv) { //不用记录
+		return ;
+	}
+
 	time_t now = time(NULL);	
 	struct tm tm;
 	localtime_r(&now, &tm);
 
-	if (open_file(llv, tm) == -1) {
+	if (open_file(llv, &tm) == -1) {
 		return ;
 	}
 
@@ -186,8 +197,10 @@ void do_log(int llv, uint32_t key, const char* fmt, ...)
 	va_start(ap, fmt);
 #define LOGBUF_LEN 2048
 	static char logbuf[LOGBUF_LEN] = {'\0'};
-	static int start = snprintf(logbuf, LOGBUF_LEN, "%02u:%02u%02u %u ", tm->tm_hour, tm->tm_min, tm->tm_sec, key);
-	static int end = vnsprintf(logbuf + start, LOGBUF_LEN - start, fmt, ap);
+	static int start = 0;
+	static int end = 0;
+	start = snprintf(logbuf, LOGBUF_LEN, "%02u:%02u:%02u %u ", tm.tm_hour, tm.tm_min, tm.tm_sec, key);
+	end = vsnprintf(logbuf + start, LOGBUF_LEN - start, fmt, ap);
 	va_end(ap);
 
 	if (unlikely(start + end >= LOGBUF_LEN)) {
@@ -195,7 +208,7 @@ void do_log(int llv, uint32_t key, const char* fmt, ...)
 		logbuf[LOGBUF_LEN - 1] = '\n';
 	}
 
-	write(logfds[llv].fd, logbuff, start + end);
+	write(logfds[llv].fd, logbuf, start + end);
 }
 
 void do_std_log(int llv, uint32_t key, const char* fmt, ...)
