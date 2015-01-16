@@ -18,21 +18,34 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "log.h"
 
+void gen_str(char buf[], int n)
+{
+	int i;
+	for (i = 0; i < n; i++) {
+		buf[i] = (char)('a' + rand() % 26);
+	}
+}
+
 int main(int argc, char* argv[])
 {
-	const char* buf = "hello,world";
+
+	char buf[2048] = {'\0'};
 	int i = 0;
 
-	int ret = log_init("log", LOG_LV_TRACE, 100, 100, "master");
+	int ret = log_init("log", LOG_LV_TRACE, 10240000, 100, "master");
 	if (ret == -1) {
 		fprintf(stderr, "log init failed");
 		return 0;
 	}
 
-	for (i = 0; i < 100000; ++i) {
+	for (i = 0; i < 10000000; ++i) {
+		memset(buf, 0, sizeof(buf));
+		gen_str(buf, rand() % 100 + 1);
 		DEBUG(i, "%s", buf);
 	}
 
