@@ -1,10 +1,16 @@
-all : libnanc.a
+CFLAGS =  -g -Wall -fPIC 
+OBJECTS = log.o util.o
 
-libnanc.a : log.o
-	ar -cru libnanc.a log.o
+all : libnanc.a libnanc.so
 
-log.o: log.c
-	gcc -g -Wall -c log.c
+libnanc.a : $(OBJECTS)
+	ar -cru libnanc.a log.o util.o
+
+libnanc.so : $(OBJECTS)
+	gcc $< -shared -o libnanc.so
+
+%.o : %.c
+	gcc $(CFLAGS) -c  $< -o $@
 
 clean:
-	rm *.o libnanc.a
+	-rm $(OBJECTS) libnanc.a
