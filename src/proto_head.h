@@ -12,7 +12,7 @@ enum PROTO_HEAD_TYPE {
 
 /* @brief 协议头
  */
-typedef struct proto_head {
+typedef struct proto_pkg {
 	int len; 		//包长度
 	uint16_t cmd;	//命令
 	uint32_t id;	//包id
@@ -21,6 +21,7 @@ typedef struct proto_head {
 #endif
 	int seq;		//包序列号
 	int ret;		//返回
-} __attribute__((packed)) proto_head_t;
+	uint8_t data[];
+} __attribute__((packed)) proto_pkg_t;
 
 #endif
