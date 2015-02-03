@@ -2,7 +2,7 @@ FLAGS = -g -Wall
 INCLUDE = 
 LIBS = `pkg-config --cflags --libs glib-2.0`
 
-all : test_log test_util test_timer
+all : test_util test_timer
 	#gcc -o test_log test_log.o -I./src -L./src -lnanc
 
 test_log.o : test_log.c

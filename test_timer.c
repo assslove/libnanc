@@ -18,6 +18,7 @@
 
 #include <libnanc/timer.h>
 #include <libnanc/log.h>
+#include <libnanc/util.h>
 #include <glib.h>
 #include <unistd.h>
 
@@ -28,7 +29,9 @@ int count = 1;
 void print_count(void *owner, void* data)
 {
 	printf("%u\n", ++count);
-	ADD_TIMER_EVENT(1, get_now_tv() + 1, print_count, NULL, NULL);
+	heap_timer_t *item = container_of(owner, heap_timer_t, owner);
+	//MODIFY_TIMER_EVENT(item, get_now_tv() + 1);
+	REMOVE_TIMER_EVENT(item);
 }
 
 int main(int argc, char* argv[])
@@ -37,7 +40,7 @@ int main(int argc, char* argv[])
 	ADD_TIMER_EVENT(1, time(NULL) + 1, print_count, NULL, NULL);
 	while (1) {
 		timer_handle();
-		mssleep(10);
+		usleep(1000 * 100);
 	}
 
 	timer_fini();

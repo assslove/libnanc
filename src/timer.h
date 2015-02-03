@@ -41,15 +41,16 @@ inline void timer_handle()
 		while ((item = min_heap_top(&g_base_heap)) != NULL) {
 			if (item && item->expire <= last && item->func) { //如果时间到
 				item->func(item->owner, item->data); //调用函数
-				min_heap_pop(&g_base_heap);
-				free(item);
-				item = NULL;
+//				min_heap_pop(&g_base_heap);
+//				free(item);
+//				item = NULL;
 				continue;
 			} 
 			break;
 		}
 	}
 }
+
 
 inline void timer_init()
 {
@@ -78,5 +79,15 @@ inline int add_timer_event(int timerid_, time_t expire_, timer_callback_t func_,
 		ERROR(0, "add timer event error [id=%u]", timerid_);\
 		return -1;\
 	}
+
+#define MODIFY_TIMER_EVENT(item_, expire_) \
+	item_->expire = expire_; \
+	min_heap_shift_down_(&g_base_heap, item_->min_heap_idx, item_);
+
+#define REMOVE_TIMER_EVENT(item_) \
+	min_heap_pop(&g_base_heap); \
+	free(item_);\
+	item_ = NULL;
+
 
 #endif
