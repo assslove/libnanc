@@ -12,7 +12,7 @@ libnanc.a : $(OBJECTS)
 	ar -cru libnanc.a $(OBJECTS)
 
 libnanc.so : $(OBJECTS)
-	gcc $< -shared -o libnanc.so
+	gcc $(OBJECTS) -shared -o libnanc.so
 
 %.o : %.c
 	gcc $(CFLAGS) $(LIBS) -c  $< -o $@
