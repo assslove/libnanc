@@ -40,7 +40,7 @@ inline void timer_handle()
 		heap_timer_t *item;
 		while ((item = min_heap_top(&g_base_heap)) != NULL) {
 			if (item && item->expire <= last && item->func) { //如果时间到
-				item->func(item->owner, item->data); //调用函数
+				item->func(&(item->owner), &(item->data)); //调用函数
 //				min_heap_pop(&g_base_heap);
 //				free(item);
 //				item = NULL;

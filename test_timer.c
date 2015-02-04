@@ -26,12 +26,12 @@ GHashTable *sim_data;
 
 int count = 1;
 
-void print_count(void *owner, void* data)
+void print_count(void **owner, void** data)
 {
 	printf("%u\n", ++count);
 	heap_timer_t *item = container_of(owner, heap_timer_t, owner);
-	//MODIFY_TIMER_EVENT(item, get_now_tv() + 1);
-	REMOVE_TIMER_EVENT(item);
+	MODIFY_TIMER_EVENT(item, get_now_tv() + 1);
+	//REMOVE_TIMER_EVENT(item);
 }
 
 int main(int argc, char* argv[])

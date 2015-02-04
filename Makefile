@@ -15,4 +15,4 @@ test_timer: test_timer.c
 	gcc -g -Wall -o test_timer test_timer.c -I/usr/local/include/libnanc -lnanc $(LIBS)
 
 clean : 
-	rm -f *.o test_log
+	rm -f *.o test_log test_timer

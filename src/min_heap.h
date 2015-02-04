@@ -8,7 +8,7 @@
 
 /* @brief 回调函数定义
  */
-typedef void (*timer_callback_t)(void *owner, void *data);
+typedef void (*timer_callback_t)(void **owner, void **data);
 
 /*@ brief 自定义结构
  */
@@ -19,7 +19,7 @@ typedef struct heap_timer_t {
 	timer_callback_t func; //回调函数
 	int timer_id;		//定时器类型
 	int min_heap_idx;
-} heap_timer_t;
+} __attribute__((packed)) heap_timer_t;
 
 /* @brief 最小堆结构
  */
@@ -46,7 +46,7 @@ inline void	     min_heap_shift_down_(min_heap_t* s, unsigned hole_index, struct
 
 int min_heap_elem_greater(struct heap_timer_t *a, struct heap_timer_t *b)
 {
-	return a->data > b->data;
+	return a->expire > b->expire;
 }
 
 void min_heap_ctor(min_heap_t* s) { s->p = 0; s->n = 0; s->a = 0; }
