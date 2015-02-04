@@ -51,20 +51,6 @@ inline void timer_handle()
 	}
 }
 
-/* @brief 定时器初始化
- */
-inline void timer_init()
-{
-	min_heap_ctor(&g_base_heap);
-}
-
-/* @brief 定时器销毁
- */
-inline void timer_fini()
-{
-	min_heap_dtor(&g_base_heap);
-}
-
 inline int add_timer_event(int timerid_, time_t expire_, timer_callback_t func_, void *owner_, void *data_)
 {
 	heap_timer_t* item = (heap_timer_t *)malloc(sizeof(heap_timer_t));
@@ -78,7 +64,7 @@ inline int add_timer_event(int timerid_, time_t expire_, timer_callback_t func_,
 }
 
 /* @brief 增加定时器
- */
+*/
 #define ADD_TIMER_EVENT(timerid_, expire_, func_, owner_, data_) \
 	if (add_timer_event(timerid_, expire_, func_, owner_, data_)) { \
 		ERROR(0, "add timer event error [id=%u]", timerid_);\
@@ -86,17 +72,37 @@ inline int add_timer_event(int timerid_, time_t expire_, timer_callback_t func_,
 	}
 
 /* @brief 修改定时器
- */
+*/
 #define MODIFY_TIMER_EVENT(item_, expire_) \
 	item_->expire = expire_; \
-	min_heap_shift_down_(&g_base_heap, item_->min_heap_idx, item_);
+min_heap_shift_down_(&g_base_heap, item_->min_heap_idx, item_);
 
 /* @brief 移除定时器
- */
+*/
 #define REMOVE_TIMER_EVENT(item_) \
 	min_heap_pop(&g_base_heap); \
 	free(item_);\
 	item_ = NULL;
+
+/* @brief 定时器初始化
+ */
+inline void timer_init()
+{
+	min_heap_ctor(&g_base_heap);
+}
+
+/* @brief 定时器销毁
+ */
+inline void timer_fini()
+{
+	heap_timer_t *item;
+	while ((item = min_heap_top(&g_base_heap)) != NULL) {
+		if (item) {
+			REMOVE_TIMER_EVENT(item);
+		}
+	}
+	min_heap_dtor(&g_base_heap);
+}
 
 
 #endif
