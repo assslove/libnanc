@@ -21,6 +21,7 @@
 #include <libnanc/util.h>
 #include <glib.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 GHashTable *sim_data;
 
@@ -28,9 +29,9 @@ int count = 1;
 
 void print_count(void **owner, void** data)
 {
-	printf("%u\n", ++count);
 	heap_timer_t *item = container_of(owner, heap_timer_t, owner);
-	MODIFY_TIMER_EVENT(item, get_now_tv() + 1);
+	printf("id = %u, count= %u\n", item->timer_id, ++count);
+	MODIFY_TIMER_EVENT(item, get_now_tv() + rand() % 5);
 	//REMOVE_TIMER_EVENT(item);
 }
 
@@ -38,6 +39,7 @@ int main(int argc, char* argv[])
 {
 	timer_init();
 	ADD_TIMER_EVENT(1, time(NULL) + 1, print_count, NULL, NULL);
+	ADD_TIMER_EVENT(2, time(NULL) + 2, print_count, NULL, NULL);
 	while (1) {
 		timer_handle();
 		usleep(1000 * 100);
