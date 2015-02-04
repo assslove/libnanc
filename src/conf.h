@@ -1,6 +1,10 @@
 #ifndef CONF_H_
 #define CONf_H_
 
+#include <glib.h>
+
+extern GHashTable *sim_data;
+
 /* @brief 加载配置文件 可调用多次
  */
 int load_conf(const char *name);

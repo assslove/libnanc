@@ -25,12 +25,11 @@
 #include <fcntl.h>
 #include <malloc.h>
 #include <stdlib.h>
-#include <glib.h>
 
 #include "conf.h"
 
 //主框架定义,或者自己定义
-extern GHashTable *sim_data;
+GHashTable *sim_data;
 
 static void do_free_item(void* item)
 {
