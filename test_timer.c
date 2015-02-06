@@ -31,15 +31,15 @@ void print_count(void **owner, void** data)
 {
 	heap_timer_t *item = container_of(owner, heap_timer_t, owner);
 	printf("id = %u, count= %u\n", item->timer_id, ++count);
-	MODIFY_TIMER_EVENT(item, get_now_tv() + 1);
-	//REMOVE_TIMER_EVENT(item);
+//	MODIFY_TIMER_EVENT(item, get_now_tv() + 1);
+	REMOVE_TIMER_EVENT(item);
 }
 
 int main(int argc, char* argv[])
 {
 	timer_init();
 	int i = 0;
-	for (i = 0; i < 10; ++i) {
+	for (i = 0; i < 100; ++i) {
 		ADD_TIMER_EVENT(i, time(NULL) + i + 1, print_count, NULL, NULL);
 	}
 
