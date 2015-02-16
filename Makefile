@@ -2,13 +2,11 @@ FLAGS = -g -Wall
 INCLUDE = 
 LIBS = `pkg-config --cflags --libs glib-2.0`
 
-all : test_util test_timer test_sem
+all : test_util test_timer test_sem test_log
 	#gcc -o test_log test_log.o -I./src -L./src -lnanc
 
-test_log.o : test_log.c
-	gcc -g -Wall -c test_log.c -I./src
 test_log : test_log.c
-	gcc -g -Wall -o test_log test_log.c -I./src -L./src -lnanc
+	gcc -o test_log test_log.c $(LIBS) -lpthread -L/usr/local/lib -lnanc  -g -Wall  
 test_util: test_util.c
 	gcc -g -Wall -o test_util test_util.c -I./src -L./src -lnanc
 test_timer: test_timer.c
