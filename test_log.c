@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "log.h"
+#include <libnanc/log.h>
 
 void gen_str(char buf[], int n)
 {
@@ -46,7 +46,11 @@ int main(int argc, char* argv[])
 	for (i = 0; i < 10000000; ++i) {
 		memset(buf, 0, sizeof(buf));
 		gen_str(buf, rand() % 100 + 1);
-		DEBUG(i, "%s", buf);
+		DEBUG(i, "debug %s", buf);
+		TRACE(i, "trace %s", buf);
+		INFO(i, "info %s", buf);
+		CRIT(i, "crit %s", buf);
+		BOOT(i, "boot %s", buf);
 	}
 
 	log_fini();
