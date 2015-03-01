@@ -18,10 +18,10 @@ libnanc.so : $(OBJECTS)
 	gcc $(CFLAGS) $(LIBS) -c  $< -o $@
 
 clean:
-	-rm $(OBJECTS) libnanc.a
+	-rm $(OBJECTS) libnanc.a libnanc.so
 
 install:
-	sudo cp -r libnanc.a /usr/local/lib
+	#sudo cp -r libnanc.a /usr/local/lib
 	sudo cp -r libnanc.so /usr/local/lib
 	sudo rm -rf $(INSTALL_DIR)
 	sudo mkdir $(INSTALL_DIR)

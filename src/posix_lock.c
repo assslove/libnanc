@@ -25,7 +25,7 @@
 
 sem_t* safe_semopen(const char* name, int init_val)
 {
-	sem_t *sem = sem_open(name, O_CREAT | O_EXCL, 0666, init_val); //同一台机子信号量不能重复
+	sem_t *sem = sem_open(name, O_CREAT, 0666, init_val); //同一台机子信号量不能重复
 	if (sem == SEM_FAILED) {
 		ERROR(0, "sem open failed [%s:%s]", name, strerror(errno));
 		return sem;
