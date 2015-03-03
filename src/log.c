@@ -39,10 +39,10 @@ static log_conf_t logconf;
 static const char *LOG_LV_NAME[LOG_LV_MAX] = {
 	"crit", 
 	"error", 
+	"boot",
 	"info", 
 	"debug", 
-	"trace", 
-	"boot"
+	"trace"
 };
 
 static int gen_log_seq(int llv, struct tm *tm) 

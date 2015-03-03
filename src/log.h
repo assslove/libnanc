@@ -16,10 +16,10 @@
 enum LOG_LV {
 	LOG_LV_CRIT = 0,
 	LOG_LV_ERROR = 1, 
-	LOG_LV_INFO = 2, 
-	LOG_LV_DEBUG = 3, 
-	LOG_LV_TRACE = 4,
-	LOG_LV_BOOT = 5,
+	LOG_LV_BOOT = 2,
+	LOG_LV_INFO = 3, 
+	LOG_LV_DEBUG = 4, 
+	LOG_LV_TRACE = 5,
 	LOG_LV_MAX
 };
 
