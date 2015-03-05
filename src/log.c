@@ -37,9 +37,9 @@
 static log_fd_t logfds[LOG_LV_MAX];
 static log_conf_t logconf;
 static const char *LOG_LV_NAME[LOG_LV_MAX] = {
+	"boot",
 	"crit", 
 	"error", 
-	"boot",
 	"info", 
 	"debug", 
 	"trace"

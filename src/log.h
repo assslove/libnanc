@@ -14,9 +14,9 @@
 /* @brief 日志级别
 */
 enum LOG_LV {
-	LOG_LV_CRIT = 0,
-	LOG_LV_ERROR = 1, 
-	LOG_LV_BOOT = 2,
+	LOG_LV_BOOT = 0,
+	LOG_LV_CRIT = 1,
+	LOG_LV_ERROR = 2, 
 	LOG_LV_INFO = 3, 
 	LOG_LV_DEBUG = 4, 
 	LOG_LV_TRACE = 5,
