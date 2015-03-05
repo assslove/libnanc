@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include "conf.h"
+#include "log.h"
 
 //主框架定义,或者自己定义
 GHashTable *sim_data;
@@ -104,7 +105,7 @@ void free_sim_data()
 
 static void print(void *key, void *value, void *userdata)
 {
-	printf("%s-%s\n", (char *)key, (char *)value);
+	BOOT(0, "%s-%s\n", (char *)key, (char *)value);
 }
 
 void print_simple_conf()
