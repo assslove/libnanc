@@ -4,15 +4,9 @@
 *.obj
 *.elf
 
-# Precompiled Headers
-*.gch
-*.pch
-
 # Libraries
 *.lib
 *.a
-*.la
-*.lo
 
 # Shared objects (inc. Windows DLLs)
 *.dll
@@ -27,5 +21,10 @@
 *.i*86
 *.x86_64
 *.hex
-cscope.file*
-tags
+core
+cscope.files*
+*.log
+*_test
+*.a
+*.so
+*.o
