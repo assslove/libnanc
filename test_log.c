@@ -46,8 +46,8 @@ int main(int argc, char* argv[])
 	for (i = 0; i < 100000000; ++i) {
 		memset(buf, 0, sizeof(buf));
 		gen_str(buf, rand() % 200 + 1);
-		DEBUG(i, "debug %s", buf);
-		//TRACE(i, "trace %s", buf);
+//		DEBUG(i, "debug %s", buf);
+		TRACE(i, "trace %s", buf);
 		//INFO(i, "info %s", buf);
 		//CRIT(i, "crit %s", buf);
 		//BOOT(i, "boot %s", buf);

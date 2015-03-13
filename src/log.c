@@ -188,7 +188,7 @@ static int open_file(int llv, struct tm *tm)
 
 void do_log(int llv, uint32_t key, const char* fmt, ...)
 {
-	if (llv >= logconf.log_lv) { //不用记录
+	if (llv > logconf.log_lv) { //不用记录
 		return ;
 	}
 
