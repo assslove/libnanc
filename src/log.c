@@ -140,8 +140,9 @@ void log_fini()
 {
 	int i = 0;
 	for (i = LOG_LV_BOOT; i < LOG_LV_MAX; ++i) {
-		if (logfds[i].fd != -1) {
+		if (logfds[i].fd != -1 && logfds[i].fd != 0) {
 			close(logfds[i].fd);
+			logfds[i].fd = -1;
 		}
 	}
 }
