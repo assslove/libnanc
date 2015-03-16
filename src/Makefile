@@ -3,7 +3,7 @@
 
 INSTALL_DIR = /usr/local/include/libnanc
 CFLAGS =  -g -Wall -fPIC -Wunused-function -lpthread
-OBJECTS = log.o util.o conf.o timer.o posix_lock.o
+OBJECTS = log.o util.o conf.o timer.o posix_lock.o random.o
 LIBS = `pkg-config --cflags --libs glib-2.0`
 
 all : libnanc.a libnanc.so
