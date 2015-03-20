@@ -1,5 +1,5 @@
-#ifndef _MIN_HEAP_H_
-#define _MIN_HEAP_H_
+#ifndef MIN_HEAP_H_
+#define MIN_HEAP_H_
 
 #include <malloc.h>
 
